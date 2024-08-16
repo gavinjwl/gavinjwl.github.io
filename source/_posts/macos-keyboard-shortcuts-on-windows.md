@@ -1,7 +1,7 @@
 ---
 title: 將 MacOS 上的鍵盤快速鍵設定到 Windows 
 date: 2024-08-15
-tags: windows, macos, keyboard, shortcuts
+tags: [windows, macos, keyboard, shortcuts]
 ---
 
 ## 緣起
