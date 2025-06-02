@@ -33,6 +33,17 @@ mathjax:
   enable: false
   cdn: //cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 
+highlight:
+  exclude_languages:
+    - mermaid
+
+# Enable or disable the mermaid chart.
+mermaid: ## mermaid url https://github.com/knsv/mermaid
+  enable: true  # default true
+  version: "11.6.0" # default v7.1.2
+  options:  # find more api options from https://github.com/knsv/mermaid/blob/master/src/mermaidAPI.js
+    startOnload: true  // default true
+
 # Comments. Choose one by filling up the information
 comments:
   # Disqus comments
