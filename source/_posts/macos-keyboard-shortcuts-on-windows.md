@@ -10,7 +10,8 @@ tags: [windows, macos, keyboard, shortcuts]
 
 ## 方法
 
-大原則是: 
+大原則是:
+
 1. 開發者或方法盡可能公開透明
 2. 盡可能不要動到底層核心
 3. 可還原 (雖然重灌治百病)
@@ -22,6 +23,7 @@ winget install --id Microsoft.PowerToys --source winget
 ```
 
 快速掃過去 PowerToys 提供的功能，其中有幾個也跟 macOS 提供的很像，例如:
+
 - 色彩選擇器 (ColorPicker)
 - Always On Top
 - 預覽
