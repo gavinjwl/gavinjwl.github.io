@@ -218,4 +218,4 @@ sss -->|4/ Pivot and Replace|target
 
 最後附上範例程式碼
 
-{% include_code lang:python iceberg_spark_cdc_sample.js %}
+{% include_code lang:python iceberg_spark_cdc_sample.py %}
