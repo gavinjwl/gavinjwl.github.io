@@ -71,7 +71,7 @@ VALUES (3, aaa33, bbb33, 33333, CURRENT_TIMESTAMP());
         "after_image": [
             {
                 "_action": "_delete",
-                "_timestamp": "2025-01-01 00:00:00",
+                "_timestamp": "2025-01-01 00:00:01",
                 "PK": 1,
                 "col_1": "aaa11",
                 "col_2": "bbb11",
@@ -107,7 +107,7 @@ VALUES (3, aaa33, bbb33, 33333, CURRENT_TIMESTAMP());
         "after_image": [
             {
                 "_action": "_delete",
-                "_timestamp": "2025-01-01 00:00:00",
+                "_timestamp": "2025-01-01 00:00:01",
                 "PK": 1
             },
             {
@@ -134,10 +134,9 @@ VALUES (3, aaa33, bbb33, 33333, CURRENT_TIMESTAMP());
 
 理想上，我們期望事件都是依照 event timestamp (事件時間戳記) 循序的被 Apache Spark Strutected Streaming 接收到，如下圖
 
-```mermaid
-graph LR;
-    A-->B-->C;
-```
+> 來源為 Apache Spark 官方文件：[handling-late-data-and-watermarking](https://spark.apache.org/docs/3.5.1/structured-streaming-programming-guide.html#handling-late-data-and-watermarking)
+
+![handling-late-data-and-watermarking](https://spark.apache.org/docs/3.5.1/img/structured-streaming-late-data.png)
 
 ## 問題分析和解決
 
@@ -148,6 +147,13 @@ graph LR;
 當我們可以保證 after_image 是 Full 的格式的時候，下游的 Spark Structured Streaming 不需要在乎接收到的事件是否依照 updated_time 排序也可以輕鬆在 foreachBatch 中使用 Window Function 先將 micro-batch 進行一次重排序並只取最新一筆紀錄然後再執行 `MERGE` 指令，如此就能將資料保持 eventually consistent (最終一致)。以下為範例
 
 ```python
+'''
+sample data:
+{"_action": "_delete", "_timestamp": "2025-01-01 00:00:01", "PK": 1, "col_1": "aaa11", "col_2": "bbb11", "col_3": 11111, "updated_time": "2025-01-01 00:00:00"}
+{"_action": "_update", "_timestamp": "2025-01-01 00:00:02", "PK": 2, "col_1": "aaa22", "col_2": "bbb22", "col_3": 0.002, "updated_time": "2025-01-01 00:00:02"}
+{"_action": "_insert", "_timestamp": "2025-01-01 00:00:03", "PK": 3, "col_1": "aaa333", "col_2": "bbb333", "col_3": 33333, "updated_time": "2025-01-01 00:00:03"}
+'''
+
 ## Fill updated_time when _action is delete
 df = df.withColumn("updated_time", coalesce("updated_time", "_timestamp"))
 
@@ -163,13 +169,15 @@ deduplicated.createOrReplaceTempView("kafka_view")
 ```
 
 ```SQL
+-- spark.sql(merge_statement)
+-- SparkSQL with Iceberg extension
 MERGE INTO target_table t
 USING (
     SELECT PK, col_1, col_2, col_3, updated_time, _action
     FROM kafka_view
 ) s
-WHEN MATCHED AND _action = _delete AND s.updated_time > t.updated_time THEN DELETE
-WHEN MATCHED AND _action = _update AND s.updated_time > t.updated_time THEN UPDATE SET
+WHEN MATCHED AND _action = _delete AND s.updated_time >= t.updated_time THEN DELETE
+WHEN MATCHED AND _action = _update AND s.updated_time >= t.updated_time THEN UPDATE SET
     t.PK = s.PK,
     t.col_1 = s.col_1,
     t.col_2 = s.col_2,
@@ -180,6 +188,6 @@ WHEN NOT MATCHED THEN
     VALUES (s.PK, s.col_1, s.col_2, s.col_3, s.updated_time)
 ```
 
-### 當 after_image 是 Partial 格式的時候，並且事件是依 updated_time 循序的話
+### 當 after_image 是 Partial 格式的時候
 
 在 after_image 是 Partial 格式的時候，並且事件是依 updated_time 循序的話
