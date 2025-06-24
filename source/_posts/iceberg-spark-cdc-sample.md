@@ -216,6 +216,4 @@ long -->|3/ Changed Data Capture|sss
 sss -->|4/ Pivot and Replace|target
 ```
 
-最後附上範例程式碼
-
-{% include_code lang:python iceberg_spark_cdc_sample.py %}
+最後附上範例程式碼 [Gist: iceberg_spark_cdc_sample.py](https://gist.github.com/gavinjwl/a20739756f938aaafb069a7dfbd42ca0#file-iceberg_spark_cdc_sample-py)
