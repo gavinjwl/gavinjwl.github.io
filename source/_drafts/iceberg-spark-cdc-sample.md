@@ -190,4 +190,32 @@ WHEN NOT MATCHED THEN
 
 ### 當 after_image 是 Partial 格式的時候
 
-在 after_image 是 Partial 格式的時候，並且事件是依 updated_time 循序的話
+> 如果是同質的關聯式資料庫之間的同步，或者說 row-based (行式) 儲存的話，則 partial 格式是相對有效率又節省頻寬
+
+在 after_image 是 Partial 格式並且是要將資料同步至 Lake House (資料湖倉) 的時候，會遇到的幾個問題是：
+
+1. 不容易實現平行處理
+2. Lake House 通常是 column-based (列式) 儲存，對於"更新"某行中的某幾列是相對沒效率 (可以想成磁頭需要移動比較多次，可參考 [Apache Parquet - File format](https://parquet.apache.org/docs/file-format/) 想像)。
+
+如果非要處理的話，可以使用 Entity-Attribute-Value (EAV) 資料結構或者可以稱之為 long and skinny table (長且窄的表)
+
+以下為簡易架構圖：
+
+```mermaid
+flowchart LR
+source@{ shape: database, label: "Source table<br>(RDBMS)" }
+event@{ shape: rounded, label: "Event<br>(Changed Data)" }
+kafka@{ shape: das, label: "Kafka" }
+sss@{ shape: rect, label: "Spark Structured Streaming" }
+long@{ shape: lin-cyl, label: "EAV table<br>(Iceberg)" }
+target@{ shape: lin-cyl, label: "Target table<br>(Iceberg)" }
+
+source --> event --> kafka -->|1/ subscribe| sss
+sss -->|2/ Unpivot and Merge|long
+long -->|3/ Changed Data Capture|sss
+sss -->|4/ Pivot and Replace|target
+```
+
+最後附上範例程式碼
+
+{% include_code lang:python iceberg_spark_cdc_sample.js %}
