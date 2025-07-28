@@ -47,7 +47,7 @@ subgraph composable_data_systems["Composable Data Systems"]
 
         spark ~~~ datafusion ~~~ trino ~~~ duckdb ~~~ redshift
     end
-    execution-engine-library -->|deploy| execution-runtime
+    execution-engine-library --> execution-runtime
 
 end
 ```
